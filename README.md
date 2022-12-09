@@ -1,6 +1,12 @@
 # scalableMLproject
 Project in Advanced Scalable Machine Learning Course at KTH
 
+* Predict: stock market
+* Data sources:
+	* 
+	* 
+* Group number: 26
+
 ![Schematic of Project Idea](Schematic.png)
 
 ## Literature

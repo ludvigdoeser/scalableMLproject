@@ -2,9 +2,10 @@
 Project in Advanced Scalable Machine Learning Course at KTH
 
 * Predict: stock market
-* Data sources:
-	* 
-	* 
+* Data sources: 
+- News sentiment in English: https://archive.ics.uci.edu/ml/datasets/News+Popularity+in+Multiple+Social+Media+Platforms
+- News headlines: https://newsapi.org/docs/endpoints/top-headlines
+- Nasdaq stock market: https://data.nasdaq.com/tools/python 
 * Group number: 26
 
 ![Schematic of Project Idea](Schematic.png)

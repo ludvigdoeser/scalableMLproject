@@ -8,7 +8,16 @@ Project in Advanced Scalable Machine Learning Course at KTH
 - Nasdaq stock market: https://data.nasdaq.com/tools/python 
 * Group number: 26
 
+* Option1: Training data columns: stock price for one company? "Tesla" - news sentiment score focusing on news related to "Tesla"  
+* Option2: Training data columns: stock price for index - news sentiment score 
+
 ![Schematic of Project Idea](Schematic.png)
+
+## ToDO
+
+* Xin&Ludvig: Try to get historical data for news, e.g. from News headlines or elsewhere!
+* Ludvig: Try to get API for new news headlines (see link above) - make sure correct news articles/country
+* Xin: Try to get API stock market index from the nasdaq link above
 
 ## Literature
 

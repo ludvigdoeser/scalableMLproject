@@ -6,6 +6,7 @@ Project in Advanced Scalable Machine Learning Course at KTH
 - News sentiment in English: https://archive.ics.uci.edu/ml/datasets/News+Popularity+in+Multiple+Social+Media+Platforms
 - News headlines: https://newsapi.org/docs/endpoints/top-headlines
 - Nasdaq stock market: https://data.nasdaq.com/tools/python 
+	- Reference: https://github.com/Nasdaq/data-link-python 
 * Group number: 26
 
 * Option1: Training data columns: stock price for one company? "Tesla" - news sentiment score focusing on news related to "Tesla"  

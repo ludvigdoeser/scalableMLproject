@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+data/news/tesla_from_*
+
 # C extensions
 *.so
 

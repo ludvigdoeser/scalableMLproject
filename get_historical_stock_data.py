@@ -49,8 +49,11 @@ def create_tsla_history():
     print('Final size of dataframe',np.shape(tesla_df))
     
     # Write the merged dataframe to a CSV file
-    save_path = "data/stock/tesla_{}-{}.csv".format(tesla_df.date[0],tesla_df.date[-1])
-    print(save_path)
-    #tesla_df.to_csv(save_path, index=False)
+    start_date ='2015-07-16'
+    end_date = '2023-01-05'
+    save_path = "data/stock/tesla_{}-{}.csv".format(start_date,end_date)
+    
+    print('Save at :',save_path)
+    tesla_df.to_csv(save_path, index=False)
     
     return tesla_df

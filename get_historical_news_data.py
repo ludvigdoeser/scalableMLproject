@@ -48,3 +48,11 @@ df.reset_index()
 
 # Write the merged dataframe to a CSV file
 df.to_csv("data/news/tesla_2013-2023.csv", index=False)
+
+# Pre-process and compute moving average
+df_raw = pd.read_csv("data/news/tesla_2013-2023.csv",usecols=['date','title','content','link','sentiment'])
+df = pre_process_news(df_raw) # this will get rid off some days... 
+df = exponential_moving_average(df_processed, window=7)
+df_temp.to_csv("data/news/training_data_exp_mean_7_days.csv")
+
+

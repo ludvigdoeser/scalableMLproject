@@ -13,6 +13,7 @@ import inspect
 from calendar import monthrange
 import pandas_market_calendars as mcal
 import datetime
+from datetime import date, timedelta
 
 # Finance 
 import yfinance as yf

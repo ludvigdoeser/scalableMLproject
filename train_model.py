@@ -175,9 +175,9 @@ def g():
     mr = project.get_model_registry()
     
     # Save our model to 'model_dir', whose contents will be uploaded to the model registry
-    export_path = model_dir+"/stock_pred_model.pb"
-    print('Exporting trained model to: {}'.format(export_path))
-    tensorflow.saved_model.save(model, export_path)
+    #export_path = model_dir+"/stock_pred_model"
+    print('Exporting trained model to: {}'.format(model_dir))
+    tensorflow.saved_model.save(model, model_dir)
     
     print('The model directory now contains: ',os.listdir(model_dir))
     

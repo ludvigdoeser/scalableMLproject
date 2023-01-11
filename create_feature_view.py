@@ -10,6 +10,12 @@ def fix_data_from_feature_view(df,start_date,end_date):
     df = df.reset_index()
     df = df.drop(columns=["index"])
 
+    # Create a boolean mask for rows that fall within the date range
+    mask = (pd.to_datetime(df['date']) >= pd.to_datetime(start_date)) & (pd.to_datetime(df['date']) <= pd.to_datetime(end_date))
+    len_df = np.shape(df)
+    df = df[mask] # Use the boolean mask to filter the DataFrame
+    print('From shape {} to {} after cropping to given date range: {} to {}'.format(len_df,np.shape(df),start_date,end_date))
+
     # Get rid off all non-business days
     isBusinessDay, is_open = extract_business_day(start_date,end_date)
     is_open = [not i for i in is_open] # Invert the mask to be able to drop all non-buisiness days

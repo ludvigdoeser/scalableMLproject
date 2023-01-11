@@ -6,11 +6,8 @@ import numpy as np
 
 def create_tsla_history():
 
-    start_date ='2015-07-16'
-    end_date = '2023-01-05'
-
-    start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d") #datetime.date(2015, 7, 16)
-    end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d") #datetime.date(2023, 1, 4)
+    start_date = datetime.datetime.strptime('2015-07-16',"%Y-%m-%d") #datetime.date(2015, 7, 16)
+    end_date = datetime.datetime.strptime('2023-01-05',"%Y-%m-%d") #datetime.date(2023, 1, 4)
 
     # Get the TSLA stock data from yfinance
     tsla = yf.Ticker("TSLA") #VEFAB.ST

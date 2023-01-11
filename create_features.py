@@ -1,3 +1,0 @@
-# Create the feature groups!
-
-create_the_feature_groups...

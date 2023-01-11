@@ -39,7 +39,7 @@ def g():
     print("Today's date:", today)
     
     print('Login & Fetching feature view from hopsworks...')
-    project = hopsworks.login(api_key_value="qufVZ6euYPKebH4n.zmsSbdrZmtbkv214l1hmxVukJy1s9tCRYHvFNDnE8oA8K4GXfLEzK9TKBHGQpGyr")
+    project = hopsworks.login()
     fs = project.get_feature_store()
 
     # Get feature view and data 
@@ -61,23 +61,27 @@ def g():
 
     # Load data needed for inference 
  
+    # ---------------------------------------------------------
     # For manual manipulation:
-    today = datetime.strptime("2023-01-03","%Y-%m-%d") 
+    today = datetime.strptime("2023-01-06","%Y-%m-%d")  # 06 have been run!
+    # ---------------------------------------------------------
     
     df = fix_data_from_feature_view(df,(today - timedelta(days=30)).strftime("%Y-%m-%d"),today.strftime("%Y-%m-%d"))
     
     # Only use the last 7 business days
     df = df[-7:]
+    
+    print('Feature view:')
+    print(df)
 
     # Drop date and swap order of columns... because of how training was set up
     df = df.drop(columns='date')
     column_order = ['exp_mean_7_days','close']
     df = df.reindex(columns=column_order) # Use reindex to change the order of columns
-    print(df)
     
     c = tensorflow.constant(df.values.reshape(-1, df.shape[0], df.shape[1]), tensorflow.float32)
     y_pred = serving_function(c)['dense_1'].numpy()
-    print('Prediction = ',y_pred[0][0])
+    print('Prediction for tomorrow = ',y_pred[0][0])
     
     # Need the inverse transformation:
     td_transformation_functions = fv._transformation_functions 
@@ -89,18 +93,29 @@ def g():
     df_pred = pd.DataFrame(y_pred,columns=['pred_close'])
     pred = df_pred['pred_close'].map(lambda x: x*(param_dict["max_value"]-param_dict["min_value"])+param_dict["min_value"])
    
-    truth = df['close'].to_numpy()[-1]
-    print(truth)
-    df_temp = pd.DataFrame([truth],columns=['truth'])
-    yesterday_truth = df_temp['truth'].map(lambda x: x*(param_dict["max_value"]-param_dict["min_value"])+param_dict["min_value"]) 
     
+    truth_today = df['close'].to_numpy()[-1]
+    print('Today truth: ',truth_today) #remember you're predicting tomorrow...
+    df_temp = pd.DataFrame([truth_today],columns=['truth'])
+    truth_today = df_temp['truth'].map(lambda x: x*(param_dict["max_value"]-param_dict["min_value"])+param_dict["min_value"]) 
+    
+    truth_yesterday = df['close'].to_numpy()[-2]
+    print('Yesterday truth: ',truth_yesterday) #to correct the daily return from yesterday 
+    df_temp = pd.DataFrame([truth_yesterday],columns=['truth'])
+    truth_yesterday = df_temp['truth'].map(lambda x: x*(param_dict["max_value"]-param_dict["min_value"])+param_dict["min_value"]) 
+    
+    tomorrow = (today + timedelta(days=1)).strftime("%Y-%m-%d")
     data = {
-        'date': [(today + timedelta(days=1)).strftime("%Y-%m-%d")],
-        'prediction_close': [pred[0]],
-        'true_close': [np.nan]
+        'date': [tomorrow],
+        'predicted_end_of_day_price': [pred[0]],
+        'predicted_daily_return': [(pred[0]-truth_today[0])/truth_today[0]],
+        'true_end_of_day_price': [np.nan],
+        'true_daily_return': [np.nan]
     }
     
     monitor_df = pd.DataFrame(data)
+    print('monitor_df:')
+    print(monitor_df)
     
     print("Creating/getting feature group: stock_predictions")
     monitor_fg = fs.get_or_create_feature_group(name="stock_predictions",
@@ -109,6 +124,8 @@ def g():
                                          primary_key=["date"],
                                          online_enabled=True)
     """
+    # Run these lines the first time:
+    
     monitor_fg.insert(monitor_df, 
                       write_options={"wait_for_job" : False})
     
@@ -123,28 +140,37 @@ def g():
     print('history_pred_df: ')
     print(history_pred_df)
     
-    # Add our prediction to the history
-    history_pred_df = pd.concat([history_pred_df, monitor_df])
-    print('history_pred_df: ')
-    print(history_pred_df)
+    if str(tomorrow) == str(history_pred_df['date'].iloc[-1]):
+        print('Do not insert anything... because tomorrow has already been predicted')
+    else:
+        print('Adding the last row to the feature group:')
     
-    # Add true label on yesterdays NaN...
-    history_pred_df.iloc[-2, history_pred_df.columns.get_loc('true_close')] = yesterday_truth[0]
-    print('history_pred_df: ')
-    print(history_pred_df)
+        # Add our prediction to the history
+        print('Add our prediction to the history')
+        history_pred_df = pd.concat([history_pred_df, monitor_df])
+        print('history_pred_df: ')
+        print(history_pred_df)
+
+        # Add true label on yesterdays NaN...
+        print('Add true label on yesterdays NaN...')
+        history_pred_df.iloc[-2, history_pred_df.columns.get_loc('true_end_of_day_price')] = truth_today[0]
+        history_pred_df.iloc[-2, history_pred_df.columns.get_loc('true_daily_return')] = (truth_today[0]-truth_yesterday[0])/truth_yesterday[0]
+        print('history_pred_df: ')
+        print(history_pred_df)
     
-    print('Insert this dataframe to the feature group')
-    monitor_fg.insert(history_pred_df, 
-                      write_options={"wait_for_job" : False},
-                      overwrite=True)
-    
+        ## INDENT
+        print('Insert this dataframe to the feature group')
+        monitor_fg.insert(history_pred_df, 
+                          write_options={"wait_for_job" : False},
+                          overwrite=True)
+
     """
     # Save the latest 7 days to be presented at the UI:
     df_recent = history_pred_df.tail(7)
-    
+
     # Store things to be presented in UI:
     dataset_api = project.get_dataset_api()    
-    
+
     dfi.export(df_recent, './df_recent_tsla_predictions.png', table_conversion = 'matplotlib')
     dataset_api.upload("./df_recent_tsla_predictions.png", "Resources/images", overwrite=True)
     """

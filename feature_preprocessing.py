@@ -17,6 +17,9 @@ def extract_business_day(start_date,end_date):
         e.g is_open = [1,0,...,1] means that start_date = open, day after start_date = closed, and end_date = open
     """
     
+    # Save for later
+    end_date_save = end_date
+    
     # Get the NYSE calendar
     cal = mcal.get_calendar('NYSE')
 
@@ -47,7 +50,7 @@ def extract_business_day(start_date,end_date):
         if start_date.strftime('%Y-%m-%d') == current_BusinessDay:
             is_open[count_dates] = True
 
-            if current_BusinessDay == "2023-01-04":
+            if current_BusinessDay == end_date_save:
                 break
             else:
                 next_BusinessDay += 1

@@ -4,8 +4,40 @@ import json
 import pandas_market_calendars as mcal
 import datetime
 import numpy as np
+from datetime import timedelta 
 
 # Stock market:
+def today_is_a_business_day(today):
+    # Get the NYSE calendar
+    cal = mcal.get_calendar('NYSE')
+    schedule = cal.schedule(start_date=today, end_date=today) # Get the NYSE calendar's open and close times for the specified period
+    try:
+        isBusinessDay = schedule.market_open.dt.strftime('%Y-%m-%d')
+        return True
+    except:
+        print('Today {} is not a business day'.format(today))
+        return False
+    
+def next_business_day(today):
+    
+    # Real tomorrow
+    tomorrow = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    # Get the NYSE calendar
+    cal = mcal.get_calendar('NYSE')
+
+    found_next_business_day = False 
+    while not found_next_business_day:
+        schedule = cal.schedule(start_date=tomorrow, end_date=tomorrow) # Get the NYSE calendar's open and close times for the specified period
+        try:
+            isBusinessDay = schedule.market_open.dt.strftime('%Y-%m-%d') # Only need a list of dates when it's open (not open and close times)
+            found_next_business_day = True
+        except:
+            print('The date {} is not a business day'.format(tomorrow))
+            tomorrow = (datetime.datetime.strptime(tomorrow,"%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+            
+    return isBusinessDay.to_numpy()[0]
+
 def extract_business_day(start_date,end_date):
     """
     Given a start_date and end_date.
@@ -50,7 +82,7 @@ def extract_business_day(start_date,end_date):
         if start_date.strftime('%Y-%m-%d') == current_BusinessDay:
             is_open[count_dates] = True
 
-            if current_BusinessDay == end_date_save:
+            if current_BusinessDay == end_date_save or current_BusinessDay==isBusinessDay[-1]:
                 break
             else:
                 next_BusinessDay += 1
@@ -60,6 +92,8 @@ def extract_business_day(start_date,end_date):
 
         count_dates += 1   
         start_date += delta
+        
+    print(np.shape(is_open))
         
     return isBusinessDay, is_open
 

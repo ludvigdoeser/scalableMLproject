@@ -6,7 +6,7 @@ LOCAL=False
 
 if LOCAL == False:
     stub = modal.Stub()
-    packages = ["hopsworks","pandas","numpy","tensorflow","pandas_market_calendars","joblib","scikit-learn","yfinance"]
+    packages = ["hopsworks","pandas","numpy","tensorflow","pandas_market_calendars","joblib","scikit-learn","yfinance","dataframe-image"]
     hopsworks_image = modal.Image.debian_slim().pip_install(packages)
     
     # schedule this function to run every day at 21:05 (stock market closes 21:00 greenwich time)
@@ -22,6 +22,7 @@ def g():
     import joblib
     import inspect 
     import yfinance as yf 
+    import dataframe_image as dfi
     
     print('Login & Fetching feature view from hopsworks...')
     project = hopsworks.login()
@@ -46,6 +47,15 @@ def g():
     print('Number of news articles today: ',len(news_df.index))
     print('Here are some of them:')
     print(news_df)
+    
+    # Store things to be presented in UI:
+    news_to_upload = news_df.copy()
+    news_to_upload = pre_process_news(news_to_upload,return_early=True)
+    
+    dataset_api = project.get_dataset_api()  
+
+    dfi.export(news_to_upload.tail(20), './df_latest_news.png', table_conversion = 'matplotlib')
+    dataset_api.upload("./df_latest_news.png", "Resources/images", overwrite=True)
     
     # Fetch existing feature group
     news_sentiment_fg = fs.get_feature_group(name="news_sentiment",version=1)

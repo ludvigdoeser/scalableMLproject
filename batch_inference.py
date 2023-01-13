@@ -7,11 +7,11 @@ LOCAL=False
 
 if LOCAL == False:
     stub = modal.Stub()
-    packages = ["hopsworks","pandas","numpy","tensorflow","pandas_market_calendars","joblib","scikit-learn","dataframe-image","matplotlib","yfinance"]
+    packages = ["hopsworks","pandas","numpy","tensorflow","pandas_market_calendars","joblib","scikit-learn","dataframe-image","matplotlib","yfinance","seaborn"]
     hopsworks_image = modal.Image.debian_slim().pip_install(packages)
     
     # schedule = modal.Period(days=1)
-    @stub.function(image=hopsworks_image, secret=modal.Secret.from_name("scalableML"))
+    @stub.function(image=hopsworks_image, schedule=modal.Cron("45 21 * * *"), secret=modal.Secret.from_name("scalableML"))
     def f():
         g()
 
@@ -69,7 +69,7 @@ def g():
 
         # ---------------------------------------------------------
         # For manual manipulation:
-        today = datetime.strptime("2023-01-12","%Y-%m-%d")  # have not run 12 yet!
+        #today = datetime.strptime("2023-01-12","%Y-%m-%d")  
         # ---------------------------------------------------------
         
         df = fix_data_from_feature_view(df,(today - timedelta(days=30)).strftime("%Y-%m-%d"),today.strftime("%Y-%m-%d"))
@@ -168,11 +168,9 @@ def g():
             print('history_pred_df: ')
             print(history_pred_df)
 
-            """
             print('Insert this dataframe to the feature group')
             monitor_fg.insert(history_pred_df.tail(2), 
                               write_options={"wait_for_job" : False})
-            """
 
             print('Save png of the recent predictions')
             # Save the latest 7 days to be presented at the UI:
@@ -221,11 +219,20 @@ def g():
             plt.scatter(dates_temp[-1:],pred_temp[-1:],s=20,c='k')
             ax.axhline(pred_temp[-1:],c='k',alpha=0.3,ls='--')
             
+            data = data.reset_index() # move "date"-index into its own column
+            data['Date'] = data['Date'].apply(lambda x: x.strftime("%Y-%m-%d")) # Update how date is written:
+
+            """
             for pred,date_pred in zip(pred_temp,dates_temp):
                 prev_date = (datetime.strptime(date_pred,"%Y-%m-%d")-timedelta(days=1)).strftime("%Y-%m-%d")
-                close_prev_date = data.loc[data.index == prev_date, 'Close'].values[0]
-                plt.plot([pd.Period(prev_date,'B'),pd.Period(date_pred,'B')],[close_prev_date,pred],c='darkorange')
-
+                
+                close_prev_date = data.loc[data['Date'] == prev_date, 'Close']
+                print('close_prev_date = ',close_prev_date)
+                close_prev_date_value = close_prev_date.values[0]
+                
+                plt.plot([pd.Period(prev_date,'B'),pd.Period(date_pred,'B')],[close_prev_date_value,pred],c='darkorange')
+            """
+            
             # Fill the area under the line with green
             #ax.fill_between(data.index, data['Close'], where=(data['Close']>0), color='lime', alpha=0.1)
 

@@ -153,7 +153,7 @@ def exponential_moving_average(df, window):
     df[f'exp_mean_{window}_days'] = df.polarity.ewm(span = window).mean()
     return df
 
-def pre_process_news(df,resample=True):
+def pre_process_news(df,resample=True,return_early=False):
     
     # First of all: Remove NaNs
     num_with_nan = len(df['sentiment'].index)
@@ -169,12 +169,17 @@ def pre_process_news(df,resample=True):
     
     # Remove duplicates (only index will differ... have to drop some columns for duplicate-function to work properly)
     df = df.drop(columns=['index','symbols','tags'])
+    
     if type(df['sentiment'][0]) is dict:
         df["sentiment"] = df["sentiment"].astype(str)
     df = remove_duplicates(df)
         
     # Set the index to the datetime column
     df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+    
+    if return_early:
+        df = df.drop(columns=['sentiment'])
+        return df
     
     # Get rid off some columns and set date to index
     df = df.drop(columns=['title','content','link','sentiment'])

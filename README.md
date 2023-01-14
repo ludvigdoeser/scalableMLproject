@@ -21,7 +21,7 @@ The raw data for our stock price prediction project consists mainly of the follo
 * the **historical TSLA stock prices**, and 
 * the **News Sentiment data** about Tesla, Inc, 
 
-tracing from 2015-07-16 to 2023-01-04.
+tracing from 2015-07-16 to 2023-01-10.
 
 The historical stock price data are obtained with the `yfinance` package, which utilizes the `Yahoo! Finance API` to access the real-time market data containing the opening price, highest/lowest value, closing price, and the volume of a variety of stocks of financial markets. The **closing price data** of TSLA stock is normalized with MinMaxScaler, and stored together with the corresponding datetime into one feature group. 
 

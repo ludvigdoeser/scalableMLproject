@@ -7,7 +7,7 @@ This is Xin's branch!!
 
 # Draft for the Readme.md of the ScalableML Project
 
-For this project, we apply the relavant `time-series features` to train a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.
+For this project, we apply the relavant `time-series features` for training a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.
 
 The workflow of this project can be factorised into the following pipelines:
 * **feature pipeline** which excutes feature engineering with Hopsworks online feature store, 

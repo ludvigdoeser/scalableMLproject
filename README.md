@@ -49,7 +49,7 @@ For the training of our LSTM Recurrent Neural Network model, we apply a Bayesian
 The training error and validation error for the best hyperparameter setting in the above table are plotted as follows
 ![Training_Loss](https://user-images.githubusercontent.com/117981189/212438465-03b5883d-459a-4544-836e-590ca8d35e52.png)
 
-The predicted TSLA stock prices (in red) using our trained model, with the true historical stock prices (in blue) are shown in the following figure
+The predicted TSLA stock prices (in blue) using our trained model, with the true historical stock prices (in red) are shown in the following figure
 ![y_hat](https://user-images.githubusercontent.com/117981189/212439382-e91564ab-0d5f-4dbb-adaf-1b831396fbe7.png)
 
 Our model obtained from the training steps is then uploaded to the `Hopsworks Model Registry`, and further by connecting with Modal, our self-defined `create_model` function can be performed online to achieve the training process through the `Modal Stub` service. Please see also the script named `'train_model.py'`.

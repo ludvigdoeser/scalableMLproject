@@ -23,7 +23,7 @@ The raw data for our stock price prediction project consists mainly of the follo
 
 tracing from 2015-07-16 to 2023-01-10.
 
-The historical stock price data are obtained with the `yfinance` package, which utilizes the `Yahoo! Finance API` to access the real-time market data containing the opening price, highest/lowest value, closing price, and the volume of a variety of stocks of financial markets. The **closing price data** of TSLA stock is normalized with MinMaxScaler, and stored together with the corresponding datetime into one feature group. 
+The historical stock price data are obtained with the `yfinance` package, which utilizes the `Yahoo! Finance API` to access the real-time market data containing the opening price, highest/lowest value, closing price, and the volume of a variety of stocks in the financial markets. The **closing price data** of TSLA stock is normalized with MinMaxScaler, and stored together with the corresponding datetime into one feature group. 
 
 We have implemented tests by including more types of feature values in the training data, e.g., combining the closing price data with opening price, highest/lowest price, and volume data together, but found that employing only the `closing price` in the feature view could give a **smallest root-mean-squre error (RMSE)** for the trained LSTM model. Therefore we select only the closing price in our feature group based on this **offline experimentation**.
 

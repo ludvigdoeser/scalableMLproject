@@ -11,7 +11,7 @@ For this project, we apply the relavant `time-series features` for training a `L
 
 The workflow of this project can be factorised into the following pipelines:
 * **feature pipeline** which excutes feature engineering with Hopsworks online feature store, 
-* **training pipeline** with Bayesian optimization-based hyperparameter tuning, 
+* **training pipeline** with Bayesian optimization-based hyperparameter tuning, and
 * **batch-inference pipeline** which extracts newly updated stock market and news sentiment information, and perform a stock price prediction for the coming business day.
 
 Finally the reults of our TSLA stock price prediction is communicated to the users with a **user interface** hosted at the huggingface space: https://huggingface.co/spaces/LudvigDoeser/TSLA_stock_predictions

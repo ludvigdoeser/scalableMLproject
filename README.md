@@ -14,7 +14,7 @@ The workflow of this project can be factorised into the following pipelines:
 * **training pipeline** with Bayesian optimization-based hyperparameter tuning, and, 
 * **batch-inference pipeline** which extracts newly updated stock market and news sentiment information, and perform a stock price prediction for the coming business day.
 
-Finally the reults of our TSLA stock price prediction is communicated to the interested readers with a **user interface** hosted at the huggingface space: https://huggingface.co/spaces/LudvigDoeser/TSLA_stock_predictions
+Finally the results of our TSLA stock price prediction is communicated to the interested readers with a **user interface** hosted at the huggingface space: https://huggingface.co/spaces/LudvigDoeser/TSLA_stock_predictions
 
 ## Feature pipelines
 The raw data for our stock price prediction project consists mainly of the following two parts:

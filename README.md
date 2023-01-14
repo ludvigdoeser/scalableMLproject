@@ -10,7 +10,7 @@ This is Xin's branch!!
 For this project, we apply the relavant `time-series features` for training a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.
 
 The workflow of this project can be factorised into the following pipelines:
-* **feature pipeline** which excutes feature engineering with Hopsworks online feature store, 
+* **feature pipeline** which excutes feature engineering with `Hopsworks` online feature store, 
 * **training pipeline** with Bayesian optimization-based hyperparameter tuning, and, 
 * **batch-inference pipeline** which extracts newly updated stock market and news sentiment information, and perform a stock price prediction for the coming business day.
 
@@ -35,7 +35,7 @@ $$ y_t = {x_t+(1-\alpha)x_{t-1}+(1-\alpha)^2 x_{t-2}+\cdots+ (1-\alpha)^n x_{t-n
 
 where $x_t$ denotes the daily observed sentiment score values, $y_t$ denotes the desired exponential moving average, $\alpha \in (0,1)$ is the smoothing factor, and $n=7$ in our case correpsonds to a 7-day time-window for exponential smoothing. We may simply understand that the exponential moving average is applied to **give a greater weight and significance on the most recent sentiment score data**. We have also tested using $n=20$ days as the smoothing time-window, and observed similar results with using $n=7$, which validates our current choice with 7-day exponential smooothing.
 
-After extracting the relevant information from the two raw datasets, we upload the corresponding two feature groups containing (normalized) historical stock data and (smoothed) news sentiment score data respectively, to the Hopsworks feature store. Then these two feature groups are merged with the column **date** as the primary key to provide us with the online-embedded feature view. In order to match the two feature groups, we only select the rows corresponding to business days from the news sentiment feature group, where the TSLA stock are traded and a closing price is available.
+After extracting the relevant information from the two raw datasets, we upload the corresponding two feature groups containing (normalized) historical stock data and (smoothed) news sentiment score data respectively, to the `Hopsworks feature store`. Then these two feature groups are merged with the column **date** as the primary key to provide us with the online-embedded feature view. In order to match the two feature groups, we only select the rows corresponding to business days from the news sentiment feature group, where the TSLA stock are traded and a closing price is available.
 
 ## Training Pipeline
 Specifically for each business day, our training dataset contains the previous closing prices of the past 7 business days and the 7-day exponential moving average of the news sentiment score values.
@@ -52,14 +52,14 @@ The training error and validation error for the best hyperparameter setting in t
 The predicted TSLA stock prices (in red) using our trained model, with the true historical stock prices (in blue) are shown in the following figure
 ![y_hat](https://user-images.githubusercontent.com/117981189/212439382-e91564ab-0d5f-4dbb-adaf-1b831396fbe7.png)
 
-Our model obtained from the training steps is then uploaded to the Hopsworks Model Registry, and further by connecting with Modal, our self-defined `create_model` function can be performed online to achieve the training process through the `Modal Stub` service. Please see also the script named `'train_model.py'`.
+Our model obtained from the training steps is then uploaded to the `Hopsworks Model Registry`, and further by connecting with Modal, our self-defined `create_model` function can be performed online to achieve the training process through the `Modal Stub` service. Please see also the script named `'train_model.py'`.
 
 ## Batch Inference Pipeline
 Since the **News Sentiment dataset** is updated on a daily basis, our Batch Inference Pipeline is planned to be launched at 21:45 of Greenwich time every day, after the closing time of Nasdaq stock market. We shall first acquire the newly updated closing price data and News sentiment data, through the `Yahoo! finance API` and the `Sentiment Data Financial API` respectively.
 
-Using shared Python modules for feature engineering, these production data are combined with the related 7-day historial data which are retrived from the online feature store, to generate the corresponding new feature values. These new feature values can thus be inserted into our online feature view, aggregating the newly updated information for today.
+Using **shared Python modules for feature engineering**, these production data are combined with the related 7-day historial data which are retrived from the online feature store, to generate the corresponding new feature values. These new feature values can thus be inserted into our online feature view, aggregating the newly updated information for today.
 
-Moreover, we get the trained model from Hopsworks Model Registry, implement a prediction using the newly obtained feature values, and our new prediction for the next business day is communicated through a UI based on our huggingface space. Specifically, we provide a table containing the predictions and true closing stock prices in the past 5 days, comparing the predicted increase/decrease in the price v.s. the true changes in the value.
+Moreover, we get the trained model from `Hopsworks Model Registry`, implement a prediction using the newly obtained feature values, and our new prediction for the next business day is communicated through a UI based on our huggingface space. Specifically, we provide a table containing the predictions and true closing stock prices in the past 5 days, comparing the predicted increase/decrease in the price v.s. the true changes in the value.
 
 ![Table](https://user-images.githubusercontent.com/117981189/212442569-e9f302c9-9f8e-4471-9ebf-c19b36854a2c.png)
 

@@ -4,6 +4,8 @@ Ludvig Doeser & Xin Huang
 
 * Group number: 26
 
+Prediction service: the results of our TSLA stock price prediction is communicated to the interested readers with a **user interface** hosted at the `Huggingface space`: https://huggingface.co/spaces/LudvigDoeser/TSLA_stock_predictions
+
 # Predicting tomorrow's stock price of TSLA 
 
 In this project, we use time-series data (historical stock price and news sentiment data) for training a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.

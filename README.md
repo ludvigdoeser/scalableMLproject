@@ -140,7 +140,7 @@ modal deploy --name pred_tsla_stock_tomorrow batch_inference.py
 ```
 
 As we can see, they make 1 call each per day:
-![figures/Modal]
+![figures/Modal](https://raw.githubusercontent.com/ludvigdoeser/scalableMLproject/main/figures/Modal.png)
 
 ## Inspiration
 

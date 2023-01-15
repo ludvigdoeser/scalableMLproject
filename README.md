@@ -48,10 +48,10 @@ For the training of our LSTM Recurrent Neural Network model, we apply a Bayesian
 | 0.00134 | 128 | 0.01 | 0.3 | 0.01 | 1 | leaky-relu |
 | 0.00138 | 128 | 0.01 | 0.01 | 0.01 | 1 | leaky-relu |
 
-One example of our training and validation error for the best hyperparameter setting in the above table are plotted as follows
+One example of our training and validation error for the best hyperparameter setting in the above table are plotted as follows.
 ![Training_Loss](https://user-images.githubusercontent.com/117981189/212438465-03b5883d-459a-4544-836e-590ca8d35e52.png)
 
-Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed values from the hyperparameter tuning part using KerasTuner) and applying early stopping. The training of our model utilizes all the accessible data to 4th of January. One sample code for our training with `adam` optimization is given as follows:
+Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to 4th of January. One sample code for our training with `adam` optimization is given as the following `create_model` function.
 
 ```python
 def create_model(LSTM_filters=64,
@@ -93,7 +93,7 @@ def create_model(LSTM_filters=64,
 model = create_model(activation='relu',input_channels=2,depth=2)
 ```
 
-The predicted TSLA stock prices (in blue) using our trained model, with the true historical stock prices (in red) are shown in the following figure
+The predicted TSLA stock prices (in blue) using our trained model, with the true historical stock prices (in red) are shown in the following figure.
 ![y_hat](https://user-images.githubusercontent.com/117981189/212439382-e91564ab-0d5f-4dbb-adaf-1b831396fbe7.png)
 
 Our model obtained from the above training steps is uploaded to the `Hopsworks Model Registry`.
@@ -104,7 +104,7 @@ By connecting with Modal and using the data from our online feature view, one se
 ## Batch Inference Pipeline
 Since the **News Sentiment dataset** is updated on a daily basis, our Batch Inference Pipeline is planned to be launched at 21:45 of Greenwich time every day, after the closing time of Nasdaq stock market. We shall first acquire the newly updated closing price data and News sentiment data, through the `Yahoo! finance API` and the `Sentiment Data Financial API` respectively. 
 
-This is achieved through the script `feature_daily.py` which writes the obatined new production data into our feature groups, and avoids concerns about DRY code. These production data are combined with the related 7-day historial data which are retrived from the online feature store, to generate the corresponding new feature values. These new features can thus be inserted into our online feature view, aggregating the newly updated information for today.
+This is achieved through the script `feature_daily.py` which writes the obatined new production data into our feature groups, and **avoids concerns about DRY code**. These production data are combined with the related 7-day historial data which are retrived from the online feature store, to generate the corresponding new feature values. These new features can thus be inserted into our online feature view, aggregating the newly updated information for today.
 
 Moreover, we get the trained model from `Hopsworks Model Registry` and grab the data from the `Hopsworks` feature view. Then we are able to implement a prediction based on the newly obtained feature values, and our new prediction for the next business day is communicated through a UI based on our huggingface space. Specifically, we provide a table containing the predictions and true closing stock prices in the past 5 days, comparing the predicted increase/decrease in the price v.s. the true changes in the value.
 

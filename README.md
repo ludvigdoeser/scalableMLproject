@@ -138,8 +138,7 @@ We deployed the scripts using:
 modal deploy --name get_tesla_news_and_stock feature_daily.py
 ```
 
-View the Deployment for feature daily pipeline: https://modal.com/apps/ludvigdoeser/get_tesla_news_and_stock
-View the Deployment for prediction service: https://modal.com/apps/ludvigdoeser/pred_tesla_stock_tomorrow 
+![y_hat](figures)
 
 ## Inspiration
 

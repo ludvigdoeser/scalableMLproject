@@ -136,9 +136,11 @@ We deployed the scripts using:
 
 ```python
 modal deploy --name get_tesla_news_and_stock feature_daily.py
+modal deploy --name pred_tsla_stock_tomorrow batch_inference.py
 ```
 
-![y_hat](figures)
+As we can see, they make 1 call each per day:
+![figures/Modal]
 
 ## Inspiration
 

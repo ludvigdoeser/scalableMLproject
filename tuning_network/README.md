@@ -1,6 +1,6 @@
 # Hyperparameter Optimization
 
-The result of the `keras-tuner` applied on our model (see readme in root directory). The following optimization scheme with BayesianOptimization was run:
+The result of the `keras-tuner` applied on our model (see readme in root directory). The following optimization scheme with BayesianOptimization was run. The choice of using the BO instead of RandomSearch comes down to the BO being able to more efficiently trace the hyperparameter space and make data-driven (using the current trials) explorations to find the optimal settings. 
 
 ```python 
 def tune_model(hp):

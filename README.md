@@ -92,6 +92,38 @@ One example of our training and validation error for the best hyperparameter set
 
 Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to January 4th of 2023. One sample code for our training with `adam` optimization is given as the following `create_model` function.
 
+# Requirements for running the code
+
+Download the repo, create a new conda environment and then run:
+
+```
+pip install -r requirements.txt
+```
+
+For the interested reader, one can create a pip3 compatible `requirements.txt` file using:
+
+```
+pip3 freeze > requirements.txt  # Python3
+```
+
+# Deploy a model at modal
+
+modal deploy --name get_tesla_news_and_stock feature_daily.py
+
+(scalableML) ludo@Ludvigs-MBP scalableMLproject % modal deploy --name get_tesla_news_and_stock feature_daily.py
+✓ Initialized. View app at https://modal.com/apps/ap-meNRCmGr0cgl2zNoDoZXbZ
+✓ Created objects.
+├── 🔨 Created f.
+├── 🔨 Mounted feature_daily.py at /root
+├── 🔨 Mounted /Users/ludo/Documents/PhD/Courses:Cluster/ScalableMachineLearning/2022/scalableMLproject/feature_daily.py at /root/.
+└── 🔨 Mounted /Users/ludo/Documents/PhD/Courses:Cluster/ScalableMachineLearning/2022/scalableMLproject/feature_preprocessing.py at /root/.
+✓ App deployed! 🎉
+
+View Deployment: https://modal.com/apps/ludvigdoeser/get_tesla_news_and_stock
+
+For the batch_inference: https://modal.com/apps/ludvigdoeser/pred_tesla_stock_tomorrow 
+>>>>>>> ludvig
+
 ```python
 def create_model(LSTM_filters=64,
                  dropout=0.1,

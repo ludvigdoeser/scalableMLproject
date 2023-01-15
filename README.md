@@ -30,52 +30,29 @@ The raw data for our stock price prediction project consists mainly of the follo
 
 tracing from 2015-07-16 to 2023-01-10.
 
-The historical stock price data are obtained with the `yfinance` package, which utilizes the `Yahoo! Finance API` to access the real-time market data containing the opening price, highest/lowest value, closing price, and the volume of a variety of stocks in the financial markets. The **closing price data** of TSLA stock is normalized with the transformation function `min_max_scaler` available in `Hopsworks`, and stored together with the corresponding datetime into one feature group. 
+The historical stock price data are obtained with the `yfinance` package, which utilizes the `Yahoo! Finance API` to access the real-time market data containing the opening price, highest/lowest value, closing price, and the volume of a variety of stocks in the financial markets. The **closing price data** of TSLA stock and stored together with the corresponding datetime into one feature group at `Hopsworks`. 
 
 We have implemented tests by including more types of feature values in the training data, e.g., combining the closing price data with opening price, highest/lowest price, and volume data together, but found that employing only the `closing price` in the feature view could give a **smallest root-mean-squre error (RMSE)** for the trained LSTM model. Therefore we select only the closing price in our feature group based on this **offline experimentation** (see more in next section). 
 
-The News sentiment dataset is acquired from the `Sentiment Data Financial API` supported by EOD Historical Data, Unicorn Data Services. This dataset provides us with financial news sentiment analysis results on TSLA, which contains the date, title, specific content and link to each relevant report, together with a sentiment score for each piece of news. The news sentiment score is obtained by detection of positive and negative mentions inside one report, and normalizing them to a polarity value with scale [-1,1]. For example, a polarity value equals -1 indicates a completely negagive report, whereas +0.1 suggests a slight preference with positive attitude. The `Sentiment Data Financial API` updates sentiment scores on a daily basis, by aggregating the news reports on the stocks of interest.
+The News sentiment dataset is acquired from the `Sentiment Data Financial API` supported by EOD Historical Data, Unicorn Data Services. This dataset provides us with financial news sentiment analysis results on TSLA, which contains the date, title, specific content and link to each relevant report, together with a sentiment score for each piece of news. The news sentiment score is obtained by detection of positive and negative mentions inside one report, and normalizing them to a polarity value with scale [-1,1]. For example, a polarity value equals -1 indicates a completely negagive report, whereas +0.1 suggests a slight preference with positive attitude. The `Sentiment Data Financial API` updates sentiment scores direclty.
 
-Specifically, we take the 7-day **exponential moving avarage** of the news sentiment scores of TSLA as one feature group. The exponential moving average is given by the formula
+Specifically, we take the 7-day **exponential moving avarage** of the news sentiment scores of TSLA as one feature to be used. The exponential moving average is given by the formula
 
 $$ y_t = {x_t+(1-\alpha)x_{t-1}+(1-\alpha)^2 x_{t-2}+\cdots+ (1-\alpha)^n x_{t-n} \over 1+(1-\alpha)+(1-\alpha)^2+\cdots+(1-\alpha)^n} $$
 
 where $x_t$ denotes the daily observed sentiment score values, $y_t$ denotes the desired exponential moving average, $n=7$ in our case correpsonds to a 7-day time-window for exponential smoothing, and $\alpha = 2/(n+1) = 0.25 \in (0,1)$ is the smoothing factor. We may simply understand that the exponential moving average is applied to **give a greater weight and significance on the most recent sentiment score data**. We have also tested using $n=20$ days as the smoothing time-window, and observed similar results with using $n=7$, which validates our current choice with 7-day exponential smooothing.
 
-After extracting the relevant information from the two raw datasets, we upload the corresponding two feature groups containing (normalized) historical stock data and (smoothed) news sentiment score data respectively, to the `Hopsworks feature store`. Then these two feature groups are merged with the column **date** as the primary key to provide us with the online-embedded feature view. In order to match the two feature groups, we only select the rows corresponding to business days from the news sentiment feature group, where the TSLA stock are traded and a closing price is available.
+After extracting the relevant information from the two raw datasets, we upload the corresponding two feature groups containing historical stock data and (smoothed) news sentiment score data respectively, to the `Hopsworks feature store`. Then these two feature groups are merged with the column **date** as the primary key to provide us with the online-embedded feature view using:
+
+```python
+fg_query = tesla_fg.select_except(["open","low","high","volume"]).join(news_sentiment_fg.select_except(['polarity']))
+```
+In order to match the two feature groups, note that the feature view contain all dates (both business and non-business days). The feature view is further equipped with the transformation function `min_max_scaler` available in `Hopsworks`. As we only want to use business days for training, we then have a function *fix_data_from_feature_view()* that takes care of this.
+
+The feature view now contains the recent TSLA stock closing price and the exponential moving average of news sentiment scores.
 
 ## Training Pipeline
-Specifically for each business day, our training dataset contains the previous closing prices of the past 7 business days and the 7-day exponential moving average of the news sentiment score values.
-
-### (1). Offline experimentation and Training of the LSTM model
-For the training of our LSTM Recurrent Neural Network model, we apply a Bayesian optimization-based search for the setting of hyperparameters, with the help of the `KerasTuner` tool. Specifically we use 0.1 for the validation split ratio and 256 for the batch size. The hyperparameter values of the three best trials which returns the smallest RMSE values are summarized in the following table.
-| RMSE | No. filters | dropout rate | recurrent_dropout | dense_dropout | depth | activation function |
-| --- | --- | --- | --- | --- | --- | --- |
-| 0.00125 | 128 | 0.01 | 0.1 | 0.01 | 1 | leaky-relu |
-| 0.00134 | 128 | 0.01 | 0.3 | 0.01 | 1 | leaky-relu |
-| 0.00138 | 128 | 0.01 | 0.01 | 0.01 | 1 | leaky-relu |
-
-One example of our training and validation error for the best hyperparameter setting in the above table are plotted as follows.
-![Training_Loss](https://user-images.githubusercontent.com/117981189/212438465-03b5883d-459a-4544-836e-590ca8d35e52.png)
-
-Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to January 4th of 2023. One sample code for our training with `adam` optimization is given as the following `create_model` function.
-
-# Deploy a model at modal
-
-modal deploy --name get_tesla_news_and_stock feature_daily.py
-
-(scalableML) ludo@Ludvigs-MBP scalableMLproject % modal deploy --name get_tesla_news_and_stock feature_daily.py
-✓ Initialized. View app at https://modal.com/apps/ap-meNRCmGr0cgl2zNoDoZXbZ
-✓ Created objects.
-├── 🔨 Created f.
-├── 🔨 Mounted feature_daily.py at /root
-├── 🔨 Mounted /Users/ludo/Documents/PhD/Courses:Cluster/ScalableMachineLearning/2022/scalableMLproject/feature_daily.py at /root/.
-└── 🔨 Mounted /Users/ludo/Documents/PhD/Courses:Cluster/ScalableMachineLearning/2022/scalableMLproject/feature_preprocessing.py at /root/.
-✓ App deployed! 🎉
-
-View Deployment: https://modal.com/apps/ludvigdoeser/get_tesla_news_and_stock
-
-For the batch_inference: https://modal.com/apps/ludvigdoeser/pred_tesla_stock_tomorrow 
+Our training dataset contains of sets containing the previous closing prices of the past 7 business days and the 7-day exponential moving average of the news sentiment score values. The training of our model utilizes all the accessible data to January 4th of 2023. The model we wanted to use was a LSTM Recurrent Neural Network model with `adam` optimization, as is given as the following `create_model` function:
 
 ```python
 def create_model(LSTM_filters=64,
@@ -117,18 +94,29 @@ def create_model(LSTM_filters=64,
 model = create_model(activation='relu',input_channels=2,depth=2)
 ```
 
+### (1). Offline experimentation and Training of the LSTM model (see more in the `tuning_network`-directory)
+For the training of our LSTM Recurrent Neural Network model, we apply a Bayesian optimization-based search for the setting of hyperparameters, with the help of the `KerasTuner` tool. Specifically we use 0.1 for the validation split ratio and 256 for the batch size. The hyperparameter values of the three best trials which returns the smallest RMSE values are summarized in the following table.
+| RMSE | No. filters | dropout rate | recurrent_dropout | dense_dropout | depth | activation function |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.00125 | 128 | 0.01 | 0.1 | 0.01 | 1 | leaky-relu |
+| 0.00134 | 128 | 0.01 | 0.3 | 0.01 | 1 | leaky-relu |
+| 0.00138 | 128 | 0.01 | 0.01 | 0.01 | 1 | leaky-relu |
+
+One example of our training and validation error for the best hyperparameter setting in the above table are plotted as follows.
+![figures/Training_Loss](https://user-images.githubusercontent.com/117981189/212438465-03b5883d-459a-4544-836e-590ca8d35e52.png)
+
 The predicted TSLA stock prices (in blue) using our trained model, with the true historical stock prices (in red) are shown in the following figure.
 ![y_hat](https://user-images.githubusercontent.com/117981189/212439382-e91564ab-0d5f-4dbb-adaf-1b831396fbe7.png)
 
+### (2). Serverless training with Modal
+We end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. 
+
+By connecting with Modal and using the data from our online feature view, the training can be performed online through the `Modal Stub` service on a regular basis. Please see also the script named `'train_model.py'`.
+
 Our model obtained from the above training steps is uploaded to the `Hopsworks Model Registry`.
 
-### (2). Serverless training with Modal
-By connecting with Modal and using the data from our online feature view, one self-defined `create_model` function can be performed online to achieve the training process through the `Modal Stub` service on a regular basis. Please see also the script named `'train_model.py'`.
-
 ## Batch Inference Pipeline
-Since the **News Sentiment dataset** is updated on a daily basis, our Batch Inference Pipeline is planned to be launched at 21:45 of Greenwich time every day, after the closing time of Nasdaq stock market. We shall first acquire the newly updated closing price data and News sentiment data, through the `Yahoo! finance API` and the `Sentiment Data Financial API` respectively. 
-
-This is achieved through the script `feature_daily.py` which writes the obatined new production data into our feature groups, and **avoids concerns about DRY code**. These production data are combined with the related 7-day historial data which are retrived from the online feature store, to generate the corresponding new feature values. These new features can thus be inserted into our online feature view, aggregating the newly updated information for today.
+Since the **News Sentiment dataset** is updated regularly (as the news are published) and the *Nasdaq stock market* closes at 21:00 (Greenwich time), our Feature daily pipeline is scheduled to be launched at 21:05 of Greenwich time every day. We acquire the newly updated closing price data and News sentiment data, through the `Yahoo! finance API` and the `Sentiment Data Financial API` respectively. The `feature_daily.py` also writes the obatined new production data into our feature groups, and **avoids concerns about DRY code** by the use of the same pre-processing steps (as for the historical data) and transformations (through the feature view). The real-time data are combined with the most recent 7-day historial data which are retrived from the feature view. These new features can thus be inserted into our online feature view, aggregating the newly updated information for today and computing the new exponential moving average.
 
 Moreover, we get the trained model from `Hopsworks Model Registry` and grab the data from the `Hopsworks` feature view. Then we are able to implement a prediction based on the newly obtained feature values, and our new prediction for the next business day is communicated through a UI based on our huggingface space. Specifically, we provide a table containing the predictions and true closing stock prices in the past 5 days, comparing the predicted increase/decrease in the price v.s. the true changes in the value.
 
@@ -139,6 +127,17 @@ The information of this Table is also visualized with a corresponding figure, wh
 ![Predict_figure](https://user-images.githubusercontent.com/117981189/212442663-55a5693d-ba6d-4eea-95e5-6de71ccdaa31.png)
 
 This Batch Inference/Prediction Pipeline is also deployed on Modal. By specifying the schedule at 21:45 of each day for the `stub.function` with the `modal.Cron` function, our TSLA stock price prediction is performed automatically on every evening for the upcoming businessday, based on the newly obtained news sentiment scores and the closing stock price of today.
+
+## Scheduled programs at modal:
+
+We deployed the scripts using: 
+
+```python
+modal deploy --name get_tesla_news_and_stock feature_daily.py
+```
+
+View the Deployment for feature daily pipeline: https://modal.com/apps/ludvigdoeser/get_tesla_news_and_stock
+View the Deployment for prediction service: https://modal.com/apps/ludvigdoeser/pred_tesla_stock_tomorrow 
 
 ## Inspiration
 
@@ -162,4 +161,3 @@ For the interested reader, one can create a pip3 compatible `requirements.txt` f
 ```
 pip3 freeze > requirements.txt  # Python3
 ```
-

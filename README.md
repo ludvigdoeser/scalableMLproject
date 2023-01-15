@@ -1,59 +1,27 @@
 # scalableMLproject
 Project in Advanced Scalable Machine Learning Course at KTH
+Ludvig Doeser & Xin Huang 
 
-* Predict: stock market
-* Data sources: 
-- News sentiment in English: https://archive.ics.uci.edu/ml/datasets/News+Popularity+in+Multiple+Social+Media+Platforms
-- News headlines: https://newsapi.org/docs/endpoints/top-headlines
-- Nasdaq stock market: https://data.nasdaq.com/tools/python 
-	- Reference: https://github.com/Nasdaq/data-link-python 
-- Competitors: https://finnhub.io/ 
 * Group number: 26
 
-* Option1: Training data columns: stock price for one company? "Tesla" - news sentiment score focusing on news related to "Tesla"  
-* Option2: Training data columns: stock price for index - news sentiment score 
+# Predicting tomorrow's stock price of TSLA 
 
-![Schematic of Project Idea](Schematic.png)
-
-## ToDO
-
-* Xin&Ludvig: Try to get historical data for news, e.g. from News headlines or elsewhere!
-* Ludvig: Try to get API for new news headlines (see link above) - make sure correct news articles/country
-* Xin: Try to get API stock market index from the nasdaq link above
-
-## Literature
-
-* https://www.projectpro.io/article/stock-price-prediction-using-machine-learning-project/571 
-* https://stocksnips.net/learn/news-based-stock-sentiment/ 
-* https://towardsdatascience.com/sentiment-analysis-on-news-headlines-classic-supervised-learning-vs-deep-learning-approach-831ac698e276 
-
-## Tutorials
-
-* https://github.com/logicalclocks/hopsworks-tutorials/tree/master/advanced_tutorials
-* In particular, this one: https://github.com/logicalclocks/hopsworks-tutorials/tree/master/advanced_tutorials/bitcoin 
-* https://github.com/featurestoreorg/serverless-ml-course
-
-## Notes
-
-* Need to create API keys/secrets at modal. Create all API keys in same secret
-* Backfill feature pipeline gets historical data
-* Wait_for_job=False recommendation from Jim when it comes to uploading to feature group?
-* Add some great_expectations or something that looks at the data and disregards it if it is not what you expected
-
-This is Xin's branch!! 
-
-
-
-# Draft for the Readme.md of the ScalableML Project
-
-For this project, we apply the relavant `time-series features` for training a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.
+In this project, we use time-series data (historical stock price and news sentiment data) for training a `Long short-term memory (LSTM) Recurrent Neural Network model`, which serves for predicting the closing stock price of Tesla, Inc. (TSLA) in the following business day. Our LSTM model is further deployed online with the `Modal Stub` service, which enables an automatic daily performance of the prediction of the TSLA stock price.
 
 The workflow of this project can be factorised into the following pipelines:
-* **feature pipeline** which excutes feature engineering with `Hopsworks` online feature store, 
-* **training pipeline** with Bayesian optimization-based hyperparameter tuning, and, 
-* **batch-inference pipeline** which extracts newly updated stock market and news sentiment information, and perform a stock price prediction for the coming business day.
+* **feature pipeline**, which executes serverless feature engineering steps on `Modal` and then stores the data using `Hopsworks` online feature store, 
+    * `get_historical_news_data.py` and `get_historical_stock_data.py` grabs and pre-processes the historical data, and then saves it as .csv-files.
+    * `feature_preprocessing.py` contains all methods of pre-processing. This script is called by all other pipelines, which prevents DRY. 
+    * `create_and_backfill_feature_groups.py` creates feature groups at `Hopsworks` (one for the news data and one for the stock data) and fills them with the historical data.
+    * `create_feature_view.py` creates a feature view from the previous mentioned feature groups.
+    * `feature_daily.py` runs once per day to grab new data points to perform inference on (see more further down). 
+* **training pipeline**, which includes (1) offline experimentation, such as neural architecture search/hyperparameter tuning using `keras-tuner`, and (2) the online training.
+    * `train_model.py` contains the code for grabbing the data from the feature view, training the model with the offline found architecture/hyperparameters and uploads the trained model to the model registry at `Hopsworks`.
+* **batch-inference pipeline**, which extracts newly updated stock market and news sentiment information (thanks to the feature_daily), and perform a stock price prediction for the coming business day.
 
 Finally the results of our TSLA stock price prediction is communicated to the interested readers with a **user interface** hosted at the `Huggingface space`: https://huggingface.co/spaces/LudvigDoeser/TSLA_stock_predictions
+
+Below we describe the different pipelines in more depth. 
 
 ## Feature pipelines
 The raw data for our stock price prediction project consists mainly of the following two parts:
@@ -92,20 +60,6 @@ One example of our training and validation error for the best hyperparameter set
 
 Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to January 4th of 2023. One sample code for our training with `adam` optimization is given as the following `create_model` function.
 
-# Requirements for running the code
-
-Download the repo, create a new conda environment and then run:
-
-```
-pip install -r requirements.txt
-```
-
-For the interested reader, one can create a pip3 compatible `requirements.txt` file using:
-
-```
-pip3 freeze > requirements.txt  # Python3
-```
-
 # Deploy a model at modal
 
 modal deploy --name get_tesla_news_and_stock feature_daily.py
@@ -122,7 +76,6 @@ modal deploy --name get_tesla_news_and_stock feature_daily.py
 View Deployment: https://modal.com/apps/ludvigdoeser/get_tesla_news_and_stock
 
 For the batch_inference: https://modal.com/apps/ludvigdoeser/pred_tesla_stock_tomorrow 
->>>>>>> ludvig
 
 ```python
 def create_model(LSTM_filters=64,
@@ -186,3 +139,27 @@ The information of this Table is also visualized with a corresponding figure, wh
 ![Predict_figure](https://user-images.githubusercontent.com/117981189/212442663-55a5693d-ba6d-4eea-95e5-6de71ccdaa31.png)
 
 This Batch Inference/Prediction Pipeline is also deployed on Modal. By specifying the schedule at 21:45 of each day for the `stub.function` with the `modal.Cron` function, our TSLA stock price prediction is performed automatically on every evening for the upcoming businessday, based on the newly obtained news sentiment scores and the closing stock price of today.
+
+## Inspiration
+
+* https://www.projectpro.io/article/stock-price-prediction-using-machine-learning-project/571
+* https://stocksnips.net/learn/news-based-stock-sentiment/
+* https://towardsdatascience.com/sentiment-analysis-on-news-headlines-classic-supervised-learning-vs-deep-learning-approach-831ac698e276
+* https://github.com/logicalclocks/hopsworks-tutorials/tree/master/advanced_tutorials
+    * In particular, this one: https://github.com/logicalclocks/hopsworks-tutorials/tree/master/advanced_tutorials/bitcoin
+* https://github.com/featurestoreorg/serverless-ml-course
+
+# Requirements for running the code
+
+Download the repo, create a new conda environment and then run:
+
+```
+pip install -r requirements.txt
+```
+
+For the interested reader, one can create a pip3 compatible `requirements.txt` file using:
+
+```
+pip3 freeze > requirements.txt  # Python3
+```
+

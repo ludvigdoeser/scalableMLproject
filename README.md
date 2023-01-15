@@ -51,7 +51,7 @@ For the training of our LSTM Recurrent Neural Network model, we apply a Bayesian
 One example of our training and validation error for the best hyperparameter setting in the above table are plotted as follows.
 ![Training_Loss](https://user-images.githubusercontent.com/117981189/212438465-03b5883d-459a-4544-836e-590ca8d35e52.png)
 
-Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to 4th of January. One sample code for our training with `adam` optimization is given as the following `create_model` function.
+Finally, we end up using a model that was trained for 179 epochs, with validation split ratio of 0.1 (with different random seed value from the hyperparameter tuning) and applying early stopping. The training of our model utilizes all the accessible data to January 4th of 2023. One sample code for our training with `adam` optimization is given as the following `create_model` function.
 
 ```python
 def create_model(LSTM_filters=64,
